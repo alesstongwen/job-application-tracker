@@ -1,4 +1,4 @@
-# book-review
+# Job Application Tracker
 
 To install dependencies:
 
