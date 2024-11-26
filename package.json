@@ -1,10 +1,10 @@
 {
   "name": "book-review",
-  "module": "index.ts",
+  "module": "server/index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun index.ts",
-    "dev": "bun --watch index.ts"
+    "start": "bun server/index.ts",
+    "dev": "bun --watch server/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,6 +13,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "hono": "^4.6.11"
+    "@hono/zod-validator": "^0.4.1",
+    "hono": "^4.6.11",
+    "zod": "^3.23.8"
   }
 }
