@@ -26,18 +26,18 @@ const ProcessEnv = KindeEnv.parse(process.env);
 
 // Create Kinde server client for Authorization Code Flow
 export const kindeClient = createKindeServerClient(GrantType.AUTHORIZATION_CODE, {
-    authDomain: ProcessEnv.KINDE_ISSUER_URL,         // Set the authDomain from KINDE_ISSUER_URL
-    clientId: ProcessEnv.KINDE_CLIENT_ID,           // Client ID
-    clientSecret: ProcessEnv.KINDE_CLIENT_SECRET,   // Client Secret
-    redirectURL: ProcessEnv.KINDE_REDIRECT_URI,     // Redirect URL for the login callback
-    logoutRedirectURL: ProcessEnv.KINDE_POST_LOGOUT_REDIRECT_URL, // Logout Redirect URL
+    authDomain: ProcessEnv.KINDE_ISSUER_URL,        
+    clientId: ProcessEnv.KINDE_CLIENT_ID,           
+    clientSecret: ProcessEnv.KINDE_CLIENT_SECRET,   
+    redirectURL: ProcessEnv.KINDE_REDIRECT_URI,     
+    logoutRedirectURL: ProcessEnv.KINDE_POST_LOGOUT_REDIRECT_URL, 
 });
 
 // Session Manager for managing cookies
 export const sessionManager = (c: Context): SessionManager => ({
     async getSessionItem(key: string) {
         const result = getCookie(c, key);
-        return result || null; // Return null if cookie does not exist
+        return result || null; 
     },
     async setSessionItem(key: string, value: unknown) {
         const cookieOptions = {
