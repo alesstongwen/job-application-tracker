@@ -9,12 +9,11 @@ const app = new Hono()
 app.use("*", logger())
 
 app.route("/api/dashboard", dashboardsRoute);
-app.route("/api/auth", authRoute);
-
-// const apiRoutes = app.basePath("/api").route("/dashboard", dashboardsRoute).route("/authRoute", authRoute)
+app.route("/auth", authRoute); 
 
 app.get("*", serveStatic({root: "/frontend/dist"}));
 app.get("*", serveStatic({root: "/frontend/dist/index.html"}));
 
 export default app;
-// export type ApiRoute = typeof apiRoutes
+
+export type apiRoute = typeof app;
