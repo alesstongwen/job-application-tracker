@@ -15,9 +15,13 @@
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",
     "@kinde-oss/kinde-typescript-sdk": "^2.9.1",
+    "better-sqlite3": "^11.6.0",
     "cookie": "^1.0.2",
     "dotenv": "^16.4.5",
+    "drizzle-kit": "^0.28.1",
+    "drizzle-orm": "^0.36.4",
     "hono": "^4.6.11",
+    "sqlite3": "^5.1.7",
     "zod": "^3.23.8"
   }
 }
