@@ -26,8 +26,15 @@ type Dashboard = Record<string, Column>;
 const MainDashboard: React.FC = () => {
   const [columns, setColumns] = useState<Dashboard>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state for editing jobs
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Modal state for adding jobs
   const [selectedTask, setSelectedTask] = useState<Task | null>(null); // Selected task for editing
+  const [newJob, setNewJob] = useState({
+    title: "",
+    company: "",
+    section: "applied", // Default section
+    description: "",
+  });
 
   // Fetch dashboard data from the backend
   useEffect(() => {
@@ -132,12 +139,52 @@ const MainDashboard: React.FC = () => {
     setSelectedTask(null);
   };
 
+  // Handle adding a new job
+  const handleAddJob = () => {
+    const newTask: Task = {
+      id: Date.now().toString(), // Generate a unique ID
+      content: newJob.title,
+      company: newJob.company,
+      addedAt: new Date().toLocaleString(),
+      description: newJob.description,
+    };
+
+    const updatedColumn = {
+      ...columns[newJob.section],
+      tasks: [...columns[newJob.section].tasks, newTask],
+    };
+
+    setColumns({
+      ...columns,
+      [newJob.section]: updatedColumn,
+    });
+
+    // Close modal and reset form
+    setIsAddModalOpen(false);
+    setNewJob({
+      title: "",
+      company: "",
+      section: "applied",
+      description: "",
+    });
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
     <div>
+      {/* Add Job Button */}
+      <div className="flex justify-end p-4">
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Add Job
+        </button>
+      </div>
+
       {/* Drag and Drop Context */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-4 gap-4 p-4">
@@ -200,6 +247,83 @@ const MainDashboard: React.FC = () => {
           ))}
         </div>
       </DragDropContext>
+
+      {/* Add Job Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Add Job</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">Job Title</label>
+                <input
+                  type="text"
+                  value={newJob.title}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, title: e.target.value })
+                  }
+                  className="w-full border rounded px-2 py-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={newJob.company}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, company: e.target.value })
+                  }
+                  className="w-full border rounded px-2 py-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Section</label>
+                <select
+                  value={newJob.section}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, section: e.target.value })
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
+                  {Object.keys(columns).map((col) => (
+                    <option key={col} value={col}>
+                      {columns[col].name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Description</label>
+                <textarea
+                  value={newJob.description}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, description: e.target.value })
+                  }
+                  className="w-full border rounded px-2 py-1"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="bg-gray-200 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddJob}
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Job Modal */}
       {isModalOpen && selectedTask && (
