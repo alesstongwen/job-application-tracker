@@ -11,7 +11,8 @@ CREATE TABLE `jobs` (
 --> statement-breakpoint
 CREATE TABLE `users` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`username` text NOT NULL,
+	`family_name` text NOT NULL,
+	`given_name` text NOT NULL,
 	`email` text NOT NULL,
 	`created_at` text DEFAULT 'CURRENT_TIMESTAMP'
 );

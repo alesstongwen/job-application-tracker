@@ -3,6 +3,7 @@ import {
     GrantType,
     type SessionManager,
     type UserType,
+    type UserProfile
 } from "@kinde-oss/kinde-typescript-sdk";
 import { type Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
@@ -12,13 +13,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Validate environment variables with zod
 const KindeEnv = z.object({
-    KINDE_ISSUER_URL: z.string().url(), // Your issuer URL
-    KINDE_CLIENT_ID: z.string(),       // Client ID
-    KINDE_CLIENT_SECRET: z.string(),   // Client Secret
-    KINDE_REDIRECT_URI: z.string().url(), // Redirect URI
-    KINDE_POST_LOGOUT_REDIRECT_URL: z.string().url(), // Post Logout Redirect URI
+    KINDE_ISSUER_URL: z.string().url(), 
+    KINDE_CLIENT_ID: z.string(),       
+    KINDE_CLIENT_SECRET: z.string(),   
+    KINDE_REDIRECT_URI: z.string().url(), 
+    KINDE_POST_LOGOUT_REDIRECT_URL: z.string().url(), 
 });
 
 // Parse and validate process.env
