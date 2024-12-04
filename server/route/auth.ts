@@ -12,11 +12,23 @@ export const authRoute = new Hono()
         return c.redirect(registerUrl.toString());
     })
     .get("/callback", async (c) => {
-        // get called every time we login or register
         const url = new URL(c.req.url);
+    
+        // Handle the redirect and store session data
         await kindeClient.handleRedirectToApp(sessionManager(c), url);
+    
+        // Debug: Check if tokens are set
+        const manager = sessionManager(c);
+        const accessToken = await manager.getSessionItem("access_token");
+        const idToken = await manager.getSessionItem("id_token");
+    
+        console.log("Callback - Access Token:", accessToken);
+        console.log("Callback - ID Token:", idToken);
+    
         return c.redirect("/dashboard");
     })
+    
+    
     .get("/logout", async (c) => {
         const logoutUrl = await kindeClient.logout(sessionManager(c));
         return c.redirect(logoutUrl.toString());

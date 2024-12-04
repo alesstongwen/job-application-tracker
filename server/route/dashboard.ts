@@ -19,28 +19,30 @@ type Column = {
 type Dashboard = Record<string, Column>;
 
 export const dashboardsRoute = new Hono()
-  .use(getUser)
   // Get the current dashboard data
-  .get("/", async (c) => {
-    const user = c.var.user;
-    const jobs = await db.select().from(jobsTable).where(eq(jobsTable.userId, user.id));
+  .get("/", getUser, async (c) => {
+    const user = c.get("user");
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
     
     try {
       // Fetch jobs belonging to the user
       const jobs = await db.select().from(jobsTable).where(eq(jobsTable.userId, user.id));
+      console.log("Fetched Jobs:", jobs); // Debugging statement
 
      
-const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
-  const status = job.status || "applied"; // Default status to "applied" if not set
+      const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
+      const status = job.status || "applied"; // Default status to "applied" if not set
 
   // If the status column doesn't exist, initialize it
-  if (!acc[status]) {
-    acc[status] = {
-      id: status,
-      name: status.charAt(0).toUpperCase() + status.slice(1),
-      tasks: [],
-    };
-  }
+          if (!acc[status]) {
+        acc[status] = {
+          id: status,
+          name: status.charAt(0).toUpperCase() + status.slice(1),
+          tasks: [],
+        };
+      }
 
   // Push the job into the corresponding column
   acc[status].tasks.push({
@@ -53,7 +55,8 @@ const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
   return acc;
 }, {});
 
-
+      
+      console.log("Dashboard:", dashboard); // Debugging statement
       return c.json(dashboard);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -74,19 +77,18 @@ const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
       })
     ),
    async (c) => {
-      const { taskId, sourceCol, destCol, destIndex } = c.req.valid("json");
+      const { taskId, sourceCol, destCol } = c.req.valid("json");
 
       try {
-        // Fetch the job being moved
-        const job = await db.select().from(jobsTable).where(eq(jobsTable.id, parseInt(taskId, 10))).limit(1);
-
-        if (!job.length) {
-          return c.json({ error: "Job not found" }, 404);
+        const result = await db
+          .update(jobsTable)
+          .set({ status: destCol })
+          .where(eq(jobsTable.id, parseInt(taskId, 10)));
+  
+        if (!result) {
+          return c.json({ error: "Failed to update job" }, 500);
         }
-
-        // Update the job's status in the database
-        await db.update(jobsTable).set({ status: destCol }).where(eq(jobsTable.id, parseInt(taskId, 10)));
-
+  
         return c.json({ success: true });
       } catch (error) {
         console.error("Error updating job status:", error);

@@ -26,9 +26,7 @@ type Dashboard = Record<string, Column>;
 const MainDashboard: React.FC = () => {
   const [columns, setColumns] = useState<Dashboard>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state for editing jobs
   const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Modal state for adding jobs
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // Selected task for editing
   const [newJob, setNewJob] = useState({
     title: "",
     company: "",
@@ -39,8 +37,9 @@ const MainDashboard: React.FC = () => {
   // Fetch dashboard data from the backend
   useEffect(() => {
     axios
-      .get("/api/dashboard")
+      .get("/api/dashboard", { withCredentials: true })
       .then((res) => {
+        console.log("Fetched Data:", res.data); // Debugging statement
         setColumns(res.data);
         setIsLoading(false);
       })
@@ -95,54 +94,24 @@ const MainDashboard: React.FC = () => {
     }
 
     axios
-      .post("/api/dashboard/update", {
-        taskId: movedTask.id,
-        sourceCol: source.droppableId,
-        destCol: destination.droppableId,
-        destIndex: destination.index,
-      })
+      .post(
+        "/api/dashboard/update",
+        {
+          taskId: movedTask.id,
+          sourceCol: source.droppableId,
+          destCol: destination.droppableId,
+          destIndex: destination.index,
+        },
+        { withCredentials: true }
+      )
       .then(() => console.log("Task position updated successfully"))
       .catch((error) => console.error("Error updating task position:", error));
-  };
-
-  // Open edit modal
-  const handleCardClick = (task: Task) => {
-    setSelectedTask(task);
-    setIsModalOpen(true);
-  };
-
-  // Handle save
-  const handleSave = () => {
-    if (selectedTask) {
-      const updatedColumns = { ...columns };
-      const columnId = Object.keys(updatedColumns).find((colId) =>
-        updatedColumns[colId].tasks.some((t) => t.id === selectedTask.id)
-      );
-
-      if (columnId) {
-        const column = updatedColumns[columnId];
-        const taskIndex = column.tasks.findIndex(
-          (t) => t.id === selectedTask.id
-        );
-        column.tasks[taskIndex] = selectedTask;
-
-        setColumns(updatedColumns);
-
-        axios
-          .post("/api/dashboard/update-task", selectedTask)
-          .then(() => console.log("Task updated successfully"))
-          .catch((error) => console.error("Error updating task:", error));
-      }
-    }
-
-    setIsModalOpen(false);
-    setSelectedTask(null);
   };
 
   // Handle adding a new job
   const handleAddJob = () => {
     const newTask: Task = {
-      id: Date.now().toString(), // Generate a unique ID
+      id: Date.now().toString(),
       content: newJob.title,
       company: newJob.company,
       addedAt: new Date().toLocaleString(),
@@ -159,7 +128,6 @@ const MainDashboard: React.FC = () => {
       [newJob.section]: updatedColumn,
     });
 
-    // Close modal and reset form
     setIsAddModalOpen(false);
     setNewJob({
       title: "",
@@ -167,6 +135,24 @@ const MainDashboard: React.FC = () => {
       section: "applied",
       description: "",
     });
+
+    axios
+      .post(
+        "/api/dashboard/add",
+        {
+          title: newJob.title,
+          company: newJob.company,
+          status: newJob.section,
+          description: newJob.description,
+        },
+        { withCredentials: true }
+      )
+      .then((res) => {
+        setColumns(res.data);
+      })
+      .catch((error) => {
+        console.error("Error adding job:", error);
+      });
   };
 
   if (isLoading) {
@@ -226,7 +212,6 @@ const MainDashboard: React.FC = () => {
                               userSelect: "none",
                               ...provided.draggableProps.style,
                             }}
-                            onClick={() => handleCardClick(task)}
                           >
                             <h4 className="font-medium">{task.content}</h4>
                             <p className="text-sm text-gray-500">
@@ -318,77 +303,6 @@ const MainDashboard: React.FC = () => {
                   className="bg-blue-500 text-white px-4 py-2 rounded"
                 >
                   Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Job Modal */}
-      {isModalOpen && selectedTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-md w-96">
-            <h2 className="text-lg font-semibold mb-4">Edit Job</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium">Job Title</label>
-                <input
-                  type="text"
-                  value={selectedTask.content}
-                  onChange={(e) =>
-                    setSelectedTask({
-                      ...selectedTask,
-                      content: e.target.value,
-                    })
-                  }
-                  className="w-full border rounded px-2 py-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  value={selectedTask.company}
-                  onChange={(e) =>
-                    setSelectedTask({
-                      ...selectedTask,
-                      company: e.target.value,
-                    })
-                  }
-                  className="w-full border rounded px-2 py-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Description</label>
-                <textarea
-                  value={selectedTask.description || ""}
-                  onChange={(e) =>
-                    setSelectedTask({
-                      ...selectedTask,
-                      description: e.target.value,
-                    })
-                  }
-                  className="w-full border rounded px-2 py-1"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setSelectedTask(null);
-                  }}
-                  className="bg-gray-200 px-4 py-2 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                >
-                  Save
                 </button>
               </div>
             </div>

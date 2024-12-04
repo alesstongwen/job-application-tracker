@@ -37,12 +37,14 @@ export const kindeClient = createKindeServerClient(GrantType.AUTHORIZATION_CODE,
 export const sessionManager = (c: Context): SessionManager => ({
     async getSessionItem(key: string) {
         const result = getCookie(c, key);
-        return result || null; 
+        console.log(`Cookie Retrieved [${key}]:`, result); // Debugging log
+        return result || null;
     },
     async setSessionItem(key: string, value: unknown) {
+        console.log(`Setting Cookie [${key}]:`, value); // Debugging log
         const cookieOptions = {
             httpOnly: true,
-            secure: true,
+            secure: false, // testing locally -> false 
             sameSite: "Lax",
         } as const;
         if (typeof value === "string") {
@@ -55,7 +57,7 @@ export const sessionManager = (c: Context): SessionManager => ({
         deleteCookie(c, key);
     },
     async destroySession() {
-        ["id_token", "access_token", "user", "refresh_token"].forEach((key) => {
+        ["ac-state-key"].forEach((key) => {
             deleteCookie(c, key);
         });
     },
@@ -72,15 +74,29 @@ type Env = {
 export const getUser = createMiddleware<Env>(async (c, next) => {
     try {
         const manager = sessionManager(c);
+
+        // Check if tokens are present in cookies
+        const accessToken = await manager.getSessionItem("access_token");
+        const idToken = await manager.getSessionItem("id_token");
+        console.log("Access Token:", accessToken);
+        console.log("ID Token:", idToken);
+
         const isAuthenticated = await kindeClient.isAuthenticated(manager);
+        console.log("Is Authenticated:", isAuthenticated);
+
         if (!isAuthenticated) {
+            console.error("User is not authenticated.");
             return c.json({ error: "Unauthorized" }, 401);
         }
+
         const user = await kindeClient.getUserProfile(manager);
-        c.set("user", user); // Set the authenticated user in the context
+        console.log("User Profile:", user);
+
+        c.set("user", user);
         await next();
     } catch (e) {
         console.error("Error in getUser middleware:", e);
         return c.json({ error: "Unauthorized" }, 401);
     }
-});
+
+  });

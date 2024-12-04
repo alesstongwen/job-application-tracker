@@ -3,10 +3,13 @@ import {logger} from 'hono/logger'
 import { serveStatic } from 'hono/bun'
 import { dashboardsRoute } from './route/dashboard'
 import { authRoute } from './route/auth'
+import { cors } from 'hono/cors';
 
 const app = new Hono()
 
 app.use("*", logger())
+
+app.use("*", cors({ origin: "http://localhost:5173", credentials: true }));
 
 app.route("/api/dashboard", dashboardsRoute);
 app.route("/auth", authRoute); 
