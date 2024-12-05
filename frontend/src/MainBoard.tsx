@@ -100,6 +100,14 @@ const MainDashboard: React.FC = () => {
 
     if (!destination) return;
 
+    // prevent dragging within the same column
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
     const sourceCol = columns[source.droppableId];
     const destCol = columns[destination.droppableId];
 

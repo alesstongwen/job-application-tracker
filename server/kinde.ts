@@ -76,10 +76,10 @@ export const getUser = createMiddleware<Env>(async (c, next) => {
         const manager = sessionManager(c);
 
         // Check if tokens are present in cookies
-        const accessToken = await manager.getSessionItem("access_token");
-        const idToken = await manager.getSessionItem("id_token");
-        console.log("Access Token:", accessToken);
-        console.log("ID Token:", idToken);
+        // const accessToken = await manager.getSessionItem("access_token");
+        // const idToken = await manager.getSessionItem("id_token");
+        // console.log("Access Token:", accessToken);
+        // console.log("ID Token:", idToken);
 
         const isAuthenticated = await kindeClient.isAuthenticated(manager);
         console.log("Is Authenticated:", isAuthenticated);
@@ -88,8 +88,16 @@ export const getUser = createMiddleware<Env>(async (c, next) => {
             console.error("User is not authenticated.");
             return c.json({ error: "Unauthorized" }, 401);
         }
+        // const user = await kindeClient.getUserProfile(manager);
 
-        const user = await kindeClient.getUserProfile(manager);
+        const userProfile = await kindeClient.getUserProfile(manager);
+        const user: UserType = {
+            id: userProfile.id,
+            email: userProfile.email,
+            given_name: userProfile.given_name,
+            family_name: userProfile.family_name,
+            picture: userProfile.picture,
+          };
         console.log("User Profile:", user);
 
         c.set("user", user);
