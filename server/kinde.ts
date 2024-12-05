@@ -98,5 +98,4 @@ export const getUser = createMiddleware<Env>(async (c, next) => {
         console.error("Error in getUser middleware:", e);
         return c.json({ error: "Unauthorized" }, 401);
     }
-
   });

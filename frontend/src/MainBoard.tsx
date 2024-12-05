@@ -23,10 +23,17 @@ type Column = {
 
 type Dashboard = Record<string, Column>;
 
+const initialColumns: Dashboard = {
+  applied: { id: "applied", name: "Applied", tasks: [] },
+  interview: { id: "interview", name: "Interview", tasks: [] },
+  offered: { id: "offered", name: "Offered", tasks: [] },
+  rejected: { id: "rejected", name: "Rejected", tasks: [] },
+};
+
 const MainDashboard: React.FC = () => {
-  const [columns, setColumns] = useState<Dashboard>({});
+  const [columns, setColumns] = useState<Dashboard>(initialColumns);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Modal state for adding jobs
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newJob, setNewJob] = useState({
     title: "",
     company: "",
@@ -34,13 +41,40 @@ const MainDashboard: React.FC = () => {
     description: "",
   });
 
+  const checkAuthentication = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/auth/check", {
+        withCredentials: true,
+      });
+      if (!response.data.authenticated) {
+        window.location.href = "http://localhost:3000/auth/login";
+      }
+    } catch (error) {
+      console.error("Error checking authentication:", error);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
   // Fetch dashboard data from the backend
   useEffect(() => {
     axios
       .get("/api/dashboard", { withCredentials: true })
       .then((res) => {
-        console.log("Fetched Data:", res.data); // Debugging statement
-        setColumns(res.data);
+        console.log("Fetched Data:", res.data);
+        const fetchedData: Dashboard = res.data;
+
+        // Merge fetched data into initial columns
+        const updatedColumns = { ...initialColumns };
+        for (const [key, value] of Object.entries(fetchedData)) {
+          if (updatedColumns[key]) {
+            updatedColumns[key].tasks = value.tasks;
+          }
+        }
+
+        setColumns(updatedColumns);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -55,43 +89,20 @@ const MainDashboard: React.FC = () => {
 
     if (!destination) return;
 
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) {
-      return;
-    }
-
     const sourceCol = columns[source.droppableId];
     const destCol = columns[destination.droppableId];
-    const sourceTasks = Array.from(sourceCol.tasks);
-    const destTasks = Array.from(destCol.tasks);
+
+    const sourceTasks = [...sourceCol.tasks];
+    const destTasks = [...destCol.tasks];
 
     const [movedTask] = sourceTasks.splice(source.index, 1);
+    destTasks.splice(destination.index, 0, movedTask);
 
-    if (source.droppableId === destination.droppableId) {
-      sourceTasks.splice(destination.index, 0, movedTask);
-      setColumns({
-        ...columns,
-        [source.droppableId]: {
-          ...sourceCol,
-          tasks: sourceTasks,
-        },
-      });
-    } else {
-      destTasks.splice(destination.index, 0, movedTask);
-      setColumns({
-        ...columns,
-        [source.droppableId]: {
-          ...sourceCol,
-          tasks: sourceTasks,
-        },
-        [destination.droppableId]: {
-          ...destCol,
-          tasks: destTasks,
-        },
-      });
-    }
+    setColumns({
+      ...columns,
+      [source.droppableId]: { ...sourceCol, tasks: sourceTasks },
+      [destination.droppableId]: { ...destCol, tasks: destTasks },
+    });
 
     axios
       .post(
@@ -100,7 +111,6 @@ const MainDashboard: React.FC = () => {
           taskId: movedTask.id,
           sourceCol: source.droppableId,
           destCol: destination.droppableId,
-          destIndex: destination.index,
         },
         { withCredentials: true }
       )
@@ -110,6 +120,11 @@ const MainDashboard: React.FC = () => {
 
   // Handle adding a new job
   const handleAddJob = () => {
+    if (!newJob.title || !newJob.company) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+
     const newTask: Task = {
       id: Date.now().toString(),
       content: newJob.title,
@@ -148,11 +163,16 @@ const MainDashboard: React.FC = () => {
         { withCredentials: true }
       )
       .then((res) => {
-        setColumns(res.data);
+        const fetchedData: Dashboard = res.data;
+        const updatedColumns = { ...columns };
+        for (const [key, value] of Object.entries(fetchedData)) {
+          if (updatedColumns[key]) {
+            updatedColumns[key].tasks = value.tasks;
+          }
+        }
+        setColumns(updatedColumns);
       })
-      .catch((error) => {
-        console.error("Error adding job:", error);
-      });
+      .catch((error) => console.error("Error adding job:", error));
   };
 
   if (isLoading) {

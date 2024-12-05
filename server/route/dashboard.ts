@@ -28,7 +28,7 @@ export const dashboardsRoute = new Hono()
     
     try {
       // Fetch jobs belonging to the user
-      const jobs = await db.select().from(jobsTable).where(eq(jobsTable.userId, user.id));
+      const jobs = await db.select().from(jobsTable).where(eq(jobsTable.userId, user.id.toString()));
       console.log("Fetched Jobs:", jobs); // Debugging statement
 
      
@@ -80,15 +80,13 @@ export const dashboardsRoute = new Hono()
       const { taskId, sourceCol, destCol } = c.req.valid("json");
 
       try {
-        const result = await db
+        // Perform the update
+        await db
           .update(jobsTable)
           .set({ status: destCol })
           .where(eq(jobsTable.id, parseInt(taskId, 10)));
   
-        if (!result) {
-          return c.json({ error: "Failed to update job" }, 500);
-        }
-  
+        // Return success response if no exception occurs
         return c.json({ success: true });
       } catch (error) {
         console.error("Error updating job status:", error);

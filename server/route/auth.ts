@@ -14,18 +14,16 @@ export const authRoute = new Hono()
     .get("/callback", async (c) => {
         const url = new URL(c.req.url);
     
-        // Handle the redirect and store session data
-        await kindeClient.handleRedirectToApp(sessionManager(c), url);
+       
+        try {
+            const manager = sessionManager(c);
+            await kindeClient.handleRedirectToApp(manager, url);
     
-        // Debug: Check if tokens are set
-        const manager = sessionManager(c);
-        const accessToken = await manager.getSessionItem("access_token");
-        const idToken = await manager.getSessionItem("id_token");
-    
-        console.log("Callback - Access Token:", accessToken);
-        console.log("Callback - ID Token:", idToken);
-    
-        return c.redirect("/dashboard");
+            return c.redirect("http://localhost:5173/dashboard");
+        } catch (error) {
+            console.error("交換 Token 失敗:", error);
+            return c.text("授權失敗", 500);
+        }
     })
     
     
