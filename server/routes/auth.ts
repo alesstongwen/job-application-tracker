@@ -19,10 +19,10 @@ export const authRoute = new Hono()
             const manager = sessionManager(c);
             await kindeClient.handleRedirectToApp(manager, url);
     
-            return c.redirect("http://localhost:5173/dashboard");
+            return c.redirect("http://localhost:5173/");
         } catch (error) {
-            console.error("交換 Token 失敗:", error);
-            return c.text("授權失敗", 500);
+            console.error("fail getting the token:", error);
+            return c.text("unauthorize", 500);
         }
     })
     
