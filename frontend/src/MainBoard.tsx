@@ -139,18 +139,24 @@ const MainDashboard: React.FC = () => {
     if (isEditing && currentTaskId) {
       // Editing an existing job
       const updatedColumns = { ...columns };
+
+      // Find the current task and remove it from the old column
       Object.values(updatedColumns).forEach((column) => {
         const taskIndex = column.tasks.findIndex(
           (task) => task.id === currentTaskId
         );
         if (taskIndex !== -1) {
-          column.tasks[taskIndex] = {
-            ...column.tasks[taskIndex],
-            content: newJob.title,
-            company: newJob.company,
-            description: newJob.description,
-          };
+          column.tasks.splice(taskIndex, 1);
         }
+      });
+
+      // Add the task to the new column
+      updatedColumns[newJob.section].tasks.push({
+        id: currentTaskId,
+        content: newJob.title,
+        company: newJob.company,
+        addedAt: new Date().toLocaleString(),
+        description: newJob.description,
       });
 
       setColumns(updatedColumns);
