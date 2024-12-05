@@ -33,13 +33,24 @@ const initialColumns: Dashboard = {
 const MainDashboard: React.FC = () => {
   const [columns, setColumns] = useState<Dashboard>(initialColumns);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [newJob, setNewJob] = useState({
     title: "",
     company: "",
     section: "applied", // Default section
     description: "",
   });
+
+  const resetForm = () => {
+    setNewJob({
+      title: "",
+      company: "",
+      section: "applied",
+      description: "",
+    });
+  };
 
   const checkAuthentication = async () => {
     try {
@@ -118,42 +129,62 @@ const MainDashboard: React.FC = () => {
       .catch((error) => console.error("Error updating task position:", error));
   };
 
-  // Handle adding a new job
-  const handleAddJob = () => {
+  // Handle adding or editing a job
+  const handleSubmitJob = () => {
     if (!newJob.title || !newJob.company) {
       alert("Please fill out all required fields.");
       return;
     }
 
-    const newTask: Task = {
-      id: Date.now().toString(),
-      content: newJob.title,
-      company: newJob.company,
-      addedAt: new Date().toLocaleString(),
-      description: newJob.description,
-    };
+    if (isEditing && currentTaskId) {
+      // Editing an existing job
+      const updatedColumns = { ...columns };
+      Object.values(updatedColumns).forEach((column) => {
+        const taskIndex = column.tasks.findIndex(
+          (task) => task.id === currentTaskId
+        );
+        if (taskIndex !== -1) {
+          column.tasks[taskIndex] = {
+            ...column.tasks[taskIndex],
+            content: newJob.title,
+            company: newJob.company,
+            description: newJob.description,
+          };
+        }
+      });
 
-    const updatedColumn = {
-      ...columns[newJob.section],
-      tasks: [...columns[newJob.section].tasks, newTask],
-    };
+      setColumns(updatedColumns);
+      setIsEditing(false);
+      setCurrentTaskId(null);
+    } else {
+      // Adding a new job
+      const newTask: Task = {
+        id: Date.now().toString(),
+        content: newJob.title,
+        company: newJob.company,
+        addedAt: new Date().toLocaleString(),
+        description: newJob.description,
+      };
 
-    setColumns({
-      ...columns,
-      [newJob.section]: updatedColumn,
-    });
+      const updatedColumn = {
+        ...columns[newJob.section],
+        tasks: [...columns[newJob.section].tasks, newTask],
+      };
 
-    setIsAddModalOpen(false);
-    setNewJob({
-      title: "",
-      company: "",
-      section: "applied",
-      description: "",
-    });
+      setColumns({
+        ...columns,
+        [newJob.section]: updatedColumn,
+      });
+    }
+
+    setIsModalOpen(false);
+    resetForm();
 
     axios
       .post(
-        "/api/dashboard/add",
+        isEditing
+          ? `/api/dashboard/update/${currentTaskId}`
+          : "/api/dashboard/add",
         {
           title: newJob.title,
           company: newJob.company,
@@ -164,15 +195,25 @@ const MainDashboard: React.FC = () => {
       )
       .then((res) => {
         const fetchedData: Dashboard = res.data;
-        const updatedColumns = { ...columns };
-        for (const [key, value] of Object.entries(fetchedData)) {
-          if (updatedColumns[key]) {
-            updatedColumns[key].tasks = value.tasks;
-          }
-        }
-        setColumns(updatedColumns);
+        setColumns((prevColumns) => ({
+          ...prevColumns,
+          ...fetchedData,
+        }));
       })
-      .catch((error) => console.error("Error adding job:", error));
+      .catch((error) => console.error("Error submitting job:", error));
+  };
+
+  // Open the modal to edit a job
+  const handleEditJob = (task: Task, section: string) => {
+    setIsEditing(true);
+    setCurrentTaskId(task.id);
+    setNewJob({
+      title: task.content,
+      company: task.company,
+      section,
+      description: task.description || "",
+    });
+    setIsModalOpen(true);
   };
 
   if (isLoading) {
@@ -184,7 +225,11 @@ const MainDashboard: React.FC = () => {
       {/* Add Job Button */}
       <div className="flex justify-end p-4">
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            resetForm();
+            setIsEditing(false);
+            setIsModalOpen(true);
+          }}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Add Job
@@ -232,6 +277,7 @@ const MainDashboard: React.FC = () => {
                               userSelect: "none",
                               ...provided.draggableProps.style,
                             }}
+                            onClick={() => handleEditJob(task, columnId)}
                           >
                             <h4 className="font-medium">{task.content}</h4>
                             <p className="text-sm text-gray-500">
@@ -253,11 +299,13 @@ const MainDashboard: React.FC = () => {
         </div>
       </DragDropContext>
 
-      {/* Add Job Modal */}
-      {isAddModalOpen && (
+      {/* Add/Edit Job Modal */}
+      {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-md w-96">
-            <h2 className="text-lg font-semibold mb-4">Add Job</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {isEditing ? "Edit Job" : "Add Job"}
+            </h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium">Job Title</label>
@@ -313,13 +361,13 @@ const MainDashboard: React.FC = () => {
               </div>
               <div className="flex justify-end space-x-2">
                 <button
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => setIsModalOpen(false)}
                   className="bg-gray-200 px-4 py-2 rounded"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddJob}
+                  onClick={handleSubmitJob}
                   className="bg-blue-500 text-white px-4 py-2 rounded"
                 >
                   Submit
