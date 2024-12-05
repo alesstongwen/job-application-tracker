@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import {logger} from 'hono/logger'
 import { serveStatic } from 'hono/bun'
-import { dashboardsRoute } from './route/dashboard'
-import { authRoute } from './route/auth'
+import { dashboardsRoute } from './routes/dashboard'
+import { authRoute } from './routes/auth'
 import { cors } from 'hono/cors';
 
 const app = new Hono()
