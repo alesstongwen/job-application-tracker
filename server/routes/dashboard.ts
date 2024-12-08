@@ -4,7 +4,6 @@ import { zValidator } from '@hono/zod-validator';
 import { getUser } from "../kinde";
 import { db, jobs as jobsTable } from "../db";
 import { eq } from "drizzle-orm";
-import { userInfo } from "os";
 import { type UserType } from "@kinde-oss/kinde-typescript-sdk";
 
 type Column = {
@@ -42,7 +41,7 @@ export const dashboardsRoute = new Hono<CustomContext>()
       const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
       const status = job.status || "applied"; // Default status to "applied" if not set
 
-  // If the status column doesn't exist, initialize it
+      // If the status column doesn't exist, initialize it
           if (!acc[status]) {
         acc[status] = {
           id: status,
@@ -72,48 +71,65 @@ export const dashboardsRoute = new Hono<CustomContext>()
   })
 
   .post(
-    "/add",
-    zValidator(
-      "json",
-      z.object({
-        title: z.string(),
-        company: z.string(),
-        status: z.string(),
-        description: z.string().optional(),
-      })
-    ),
+    "/add", getUser, zValidator("json", z.object({title: z.string(),company: z.string(),
+      status: z.string(),
+      description: z.string().optional(),})
+    ), 
     async (c) => {
-      // Safely retrieve the user object from context
-      const user = c.get("user"); // Ensure `UserType` is imported
-
-      if (!user || !user.id) {
+      console.log("Raw Body:", await c.req.json()); // Logs the incoming JSON body
+      console.log("Validated Body:", c.req.valid("json"));
+      const user = c.get("user");
+      if (!user) {
         return c.json({ error: "Unauthorized" }, 401);
       }
-
+      
       const { title, company, status, description } = c.req.valid("json");
 
       try {
-        // Insert job into the database
+        // Insert a new job into the database
         await db.insert(jobsTable).values({
           title,
           company,
           status,
           description: description || null,
-          userId: user.id, // Pass the user ID to the schema
-          createdAt: new Date().toISOString(), // Add timestamp
+          userId: user.id,
+          createdAt: new Date().toISOString()
         });
 
+        const jobs = await db.select().from(jobsTable).where(eq(jobsTable.userId, user.id.toString()));
+        const dashboard: Dashboard = jobs.reduce<Dashboard>((acc, job) => {
+          const status = job.status || "applied"; // Default status to "applied" if not set
+
+          // If the status column doesn't exist, initialize it
+          if (!acc[status]) {
+            acc[status] = {
+              id: status,
+              name: status.charAt(0).toUpperCase() + status.slice(1),
+              tasks: [],
+            };
+          }
+
+          acc[status].tasks.push({
+            id: job.id.toString(),
+            content: job.title,
+            company: job.company,
+            addedAt: job.createdAt ? new Date(job.createdAt) : new Date(),
+          });
+
+          return acc;
+        }, {});
+
+        // Return success response if no exception occurs
         return c.json({ success: true });
       } catch (error) {
-        console.error("Error inserting job:", error);
-        return c.json({ error: "Failed to add job" }, 500);
+        console.error("Error adding new job:", error);
+        return c.json({ error: "Failed to add new job" }, 500);
       }
     }
   )
-  
   // Update task positions or move between columns
   .post(
-    "/update",
+    "/update", getUser,
     zValidator(
       "json",
       z.object({

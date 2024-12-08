@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -12,6 +11,7 @@ import axios from "axios";
 export const Route = createFileRoute("/")({
   component: Index,
 });
+
 type Task = {
   id: string;
   content: string;
@@ -149,6 +149,15 @@ function Index(): JSX.Element {
       return;
     }
 
+    const payload = {
+      title: newJob.title,
+      company: newJob.company,
+      status: newJob.section,
+      description: newJob.description || "", // Optional field
+    };
+
+    console.log("Submitting Job Payload:", payload);
+
     if (isEditing && currentTaskId) {
       // Editing an existing job
       const updatedColumns = { ...columns };
@@ -199,6 +208,12 @@ function Index(): JSX.Element {
     setIsModalOpen(false);
     resetForm();
 
+    console.log("Submitting Job:", {
+      title: newJob.title,
+      company: newJob.company,
+      status: newJob.section,
+      description: newJob.description,
+    });
     axios
       .post(
         isEditing
@@ -332,7 +347,7 @@ function Index(): JSX.Element {
                   type="text"
                   value={newJob.title}
                   onChange={(e) =>
-                    setNewJob({ ...newJob, title: e.target.value })
+                    setNewJob((prev) => ({ ...prev, title: e.target.value }))
                   }
                   className="w-full border rounded px-2 py-1"
                   required
@@ -346,7 +361,7 @@ function Index(): JSX.Element {
                   type="text"
                   value={newJob.company}
                   onChange={(e) =>
-                    setNewJob({ ...newJob, company: e.target.value })
+                    setNewJob((prev) => ({ ...prev, company: e.target.value }))
                   }
                   className="w-full border rounded px-2 py-1"
                   required
@@ -399,3 +414,5 @@ function Index(): JSX.Element {
     </div>
   );
 }
+
+export default Index;
