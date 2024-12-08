@@ -167,4 +167,40 @@ export const dashboardsRoute = new Hono<CustomContext>()
         return c.json({ error: "Failed to update job status" }, 500);
       }
     }
+  )
+  
+  .post(
+    "/delete",
+    getUser,
+    zValidator(
+      "json",
+      z.object({
+        taskId: z.string(),
+      })
+    ),
+    async (c) => {
+      const user = c.get("user");
+      if (!user) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+  
+      const { taskId } = c.req.valid("json");
+  
+      console.log("Deleting Job with ID:", taskId);
+  
+      try {
+        // Delete the job from the database
+        const result = await db
+          .delete(jobsTable)
+          .where(eq(jobsTable.id, parseInt(taskId, 10)));
+  
+        console.log("Delete Result:", result);
+  
+        // Return success response if no exception occurs
+        return c.json({ success: true });
+      } catch (error) {
+        console.error("Error deleting job:", error);
+        return c.json({ error: "Failed to delete job" }, 500);
+      }
+    }
   );

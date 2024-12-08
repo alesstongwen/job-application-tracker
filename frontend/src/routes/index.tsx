@@ -159,83 +159,37 @@ function Index(): JSX.Element {
 
     console.log("Submitting Job Payload:", payload);
 
-    if (isEditing && currentTaskId) {
-      // Editing an existing job
-      const updatedColumns = { ...columns };
+    const newTask: Task = {
+      id: Date.now().toString(),
+      content: newJob.title,
+      company: newJob.company,
+      addedAt: new Date().toLocaleString(),
+      description: newJob.description,
+    };
 
-      // Find the current task and remove it from the old column
-      Object.values(updatedColumns).forEach((column) => {
-        const taskIndex = column.tasks.findIndex(
-          (task) => task.id === currentTaskId
-        );
-        if (taskIndex !== -1) {
-          column.tasks.splice(taskIndex, 1);
-        }
-      });
-
-      // Add the task to the new column
-      updatedColumns[newJob.section].tasks.push({
-        id: currentTaskId,
-        content: newJob.title,
-        company: newJob.company,
-        addedAt: new Date().toLocaleString(),
-        description: newJob.description,
-      });
-
-      setColumns(updatedColumns);
-      setIsEditing(false);
-      setCurrentTaskId(null);
-    } else {
-      // Adding a new job
-      const newTask: Task = {
-        id: Date.now().toString(),
-        content: newJob.title,
-        company: newJob.company,
-        addedAt: new Date().toLocaleString(),
-        description: newJob.description,
+    // Update the column safely
+    const updatedColumns = { ...columns };
+    if (!updatedColumns[newJob.section]) {
+      updatedColumns[newJob.section] = {
+        id: newJob.section,
+        name: newJob.section.charAt(0).toUpperCase() + newJob.section.slice(1),
+        tasks: [],
       };
-
-      const updatedColumn = {
-        ...columns[newJob.section],
-        tasks: [...columns[newJob.section].tasks, newTask],
-      };
-
-      setColumns({
-        ...columns,
-        [newJob.section]: updatedColumn,
-      });
     }
+    updatedColumns[newJob.section].tasks.push(newTask);
 
+    setColumns(updatedColumns);
     setIsModalOpen(false);
     resetForm();
 
-    console.log("Submitting Job:", {
-      title: newJob.title,
-      company: newJob.company,
-      status: newJob.section,
-      description: newJob.description,
-    });
     axios
-      .post(
-        isEditing
-          ? `/api/dashboard/update/${currentTaskId}`
-          : "/api/dashboard/add",
-        {
-          title: newJob.title,
-          company: newJob.company,
-          status: newJob.section,
-          description: newJob.description,
-        },
-        { withCredentials: true }
-      )
+      .post("/api/dashboard/add", payload, { withCredentials: true })
       .then((res) => {
-        const fetchedData: Dashboard = res.data;
-        setColumns((prevColumns) => ({
-          ...prevColumns,
-          ...fetchedData,
-        }));
+        console.log("Job added successfully:", res.data);
       })
-      .catch((error) => console.error("Error submitting job:", error));
+      .catch((error) => {
+        console.error("Error submitting job:", error);
+      });
   };
 
   // Open the modal to edit a job
@@ -249,6 +203,26 @@ function Index(): JSX.Element {
       description: task.description || "",
     });
     setIsModalOpen(true);
+  };
+  // delete job
+  const handleDeleteJob = (taskId: string, columnId: string) => {
+    console.log("Deleting Job ID:", taskId);
+
+    axios
+      .post("/api/dashboard/delete", { taskId }, { withCredentials: true })
+      .then(() => {
+        console.log("Job deleted successfully");
+
+        // Remove the task from the state
+        const updatedColumns = { ...columns };
+        const column = updatedColumns[columnId];
+        column.tasks = column.tasks.filter((task) => task.id !== taskId);
+        setColumns(updatedColumns);
+      })
+      .catch((error) => {
+        console.error("Error deleting job:", error);
+        alert("Failed to delete the job.");
+      });
   };
 
   if (isLoading) {
@@ -291,40 +265,44 @@ function Index(): JSX.Element {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">{column.name}</h3>
                     <span className="text-sm text-gray-500">
-                      {column.tasks.length} Job
-                      {column.tasks.length !== 1 ? "s" : ""}
+                      {Array.isArray(column.tasks) ? column.tasks.length : 0}{" "}
+                      Job
+                      {Array.isArray(column.tasks) && column.tasks.length !== 1
+                        ? "s"
+                        : ""}
                     </span>
                   </div>
                   <div className="space-y-2">
-                    {column.tasks.map((task, index) => (
-                      <Draggable
-                        key={task.id}
-                        draggableId={task.id}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className="bg-white p-3 rounded shadow cursor-pointer"
-                            style={{
-                              userSelect: "none",
-                              ...provided.draggableProps.style,
-                            }}
-                            onClick={() => handleEditJob(task, columnId)}
-                          >
-                            <h4 className="font-medium">{task.content}</h4>
-                            <p className="text-sm text-gray-500">
-                              {task.company}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {task.addedAt}
-                            </p>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
+                    {Array.isArray(column.tasks) &&
+                      column.tasks.map((task, index) => (
+                        <Draggable
+                          key={task.id}
+                          draggableId={task.id}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="bg-white p-3 rounded shadow cursor-pointer"
+                              style={{
+                                userSelect: "none",
+                                ...provided.draggableProps.style,
+                              }}
+                              onClick={() => handleEditJob(task, columnId)}
+                            >
+                              <h4 className="font-medium">{task.content}</h4>
+                              <p className="text-sm text-gray-500">
+                                {task.company}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {task.addedAt}
+                              </p>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
                     {provided.placeholder}
                   </div>
                 </div>
@@ -394,7 +372,20 @@ function Index(): JSX.Element {
                   className="w-full border rounded px-2 py-1"
                 />
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-between items-center space-x-4 mt-4">
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      if (currentTaskId) {
+                        handleDeleteJob(currentTaskId, newJob.section);
+                        setIsModalOpen(false); // Close modal after deletion
+                      }
+                    }}
+                    className="bg-red-500 text-white px-4 py-2 rounded"
+                  >
+                    Delete
+                  </button>
+                )}
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="bg-gray-200 px-4 py-2 rounded"
