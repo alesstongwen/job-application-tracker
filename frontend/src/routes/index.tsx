@@ -135,6 +135,7 @@ function Index(): JSX.Element {
           taskId: movedTask.id,
           sourceCol: source.droppableId,
           destCol: destination.droppableId,
+          destIndex: destination.index,
         },
         { withCredentials: true }
       )

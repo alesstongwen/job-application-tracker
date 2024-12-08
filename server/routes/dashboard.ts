@@ -141,14 +141,25 @@ export const dashboardsRoute = new Hono<CustomContext>()
     ),
    async (c) => {
       const { taskId, sourceCol, destCol } = c.req.valid("json");
+      const user = c.get("user");
+
+      if (!user) {
+        console.error("No authenticated user");
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+  
+      console.log("Updating Job with ID:", taskId);
+      console.log("Source Column:", sourceCol, "Destination Column:", destCol);
 
       try {
         // Perform the update
-        await db
-          .update(jobsTable)
-          .set({ status: destCol })
-          .where(eq(jobsTable.id, parseInt(taskId, 10)));
-  
+        const result = await db
+        .update(jobsTable)
+        .set({ status: destCol })
+        .where(eq(jobsTable.id, parseInt(taskId, 10))); // Ensure taskId matches integer type
+
+        console.log("Update Result:", result);
+
         // Return success response if no exception occurs
         return c.json({ success: true });
       } catch (error) {
