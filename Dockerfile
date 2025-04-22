@@ -1,20 +1,22 @@
-# Use the official Bun image
+# Use Bun official image
 FROM oven/bun
 
-# Set working directory
 WORKDIR /app
 
-# Copy all project files
-COPY . .
+# Copy only package files first for better caching
+COPY package.json bun.lockb ./
 
-# Install dependencies using Bun
+# Install dependencies
 RUN bun install
 
-# Build frontend (assuming your React app is in /frontend)
+# Now copy the rest of the files
+COPY . .
+
+# Build frontend
 RUN cd frontend && bun run build
 
-# Expose port (adjust if your server uses a different port)
+# Expose port (adjust if needed)
 EXPOSE 3000
 
-# Start your Bun server
+# Start server
 CMD ["bun", "run", "server/index.ts"]
