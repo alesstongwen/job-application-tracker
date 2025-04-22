@@ -1,5 +1,5 @@
 {
-  "name": "book-review",
+  "name": "job-application-tracker",
   "module": "server/index.ts",
   "type": "module",
   "scripts": {
