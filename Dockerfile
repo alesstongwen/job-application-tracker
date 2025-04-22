@@ -2,8 +2,8 @@ FROM oven/bun
 
 WORKDIR /app
 
-# Install build tools and Python needed for node-gyp
-RUN apk add --no-cache python3 make g++  # For Alpine-based images like oven/bun
+# Install build tools and Python for Debian-based images
+RUN apt-get update && apt-get install -y python3 make g++ && apt-get clean
 
 # Copy package files
 COPY package.json bun.lockb ./
