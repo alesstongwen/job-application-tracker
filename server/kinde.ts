@@ -13,6 +13,10 @@ if (process.env.NODE_ENV !== 'production') {
     import('dotenv').then(dotenv => dotenv.config());
  }
 
+ console.log('ENV CHECK:', {
+    KINDE_ISSUER_URL: process.env.KINDE_ISSUER_URL,
+    KINDE_CLIENT_ID: process.env.KINDE_CLIENT_ID
+  });
 const KindeEnv = z.object({
     KINDE_ISSUER_URL: z.string().url(), 
     KINDE_CLIENT_ID: z.string(),       
