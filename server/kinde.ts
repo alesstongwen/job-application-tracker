@@ -9,9 +9,9 @@ import { type Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
-import dotenv from 'dotenv';
-
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+    import('dotenv').then(dotenv => dotenv.config());
+ }
 
 const KindeEnv = z.object({
     KINDE_ISSUER_URL: z.string().url(), 
