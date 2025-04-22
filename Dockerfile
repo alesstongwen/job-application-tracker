@@ -1,22 +1,22 @@
-# Use Bun official image
 FROM oven/bun
 
 WORKDIR /app
 
-# Copy only package files first for better caching
+# Install build tools and Python needed for node-gyp
+RUN apk add --no-cache python3 make g++  # For Alpine-based images like oven/bun
+
+# Copy package files
 COPY package.json bun.lockb ./
 
 # Install dependencies
 RUN bun install
 
-# Now copy the rest of the files
+# Copy rest of the files
 COPY . .
 
 # Build frontend
 RUN cd frontend && bun run build
 
-# Expose port (adjust if needed)
 EXPOSE 3000
 
-# Start server
 CMD ["bun", "run", "server/index.ts"]
