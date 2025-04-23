@@ -13,6 +13,8 @@ if (process.env.NODE_ENV !== 'production') {
     import('dotenv').then(dotenv => dotenv.config());
  }
 
+ console.log("POST_LOGOUT_REDIRECT_URL:", process.env.KINDE_POST_LOGOUT_REDIRECT_URL);
+
  console.log('ENV CHECK:', {
     KINDE_ISSUER_URL: process.env.KINDE_ISSUER_URL,
     KINDE_CLIENT_ID: process.env.KINDE_CLIENT_ID

@@ -17,4 +17,4 @@ RUN cd frontend && npm run build
 
 EXPOSE 3000
 
-CMD ["bun", "run", "server/index.ts"]
+CMD bun run server/index.ts
