@@ -18,12 +18,8 @@ export const authRoute = new Hono()
             const manager = sessionManager(c);
             await kindeClient.handleRedirectToApp(manager, url);
     
-            // Dynamic redirect after login
-            const redirectURL = Bun.env.NODE_ENV === "production"
-                ? "https://job-application-tracker-4r9c.onrender.com/profile"
-                : "http://localhost:5173/profile";
-    
-            return c.redirect(redirectURL);
+            const frontendURL = Bun.env.FRONTEND_URL || "http://localhost:5173";
+            return c.redirect(`${frontendURL}/profile`);
         } catch (error) {
             console.error("Fail getting the token:", error);
             return c.text("Unauthorized", 500);
