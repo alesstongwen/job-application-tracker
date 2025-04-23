@@ -14,23 +14,30 @@ export const authRoute = new Hono()
     .get("/callback", async (c) => {
         const url = new URL(c.req.url);
     
-       
         try {
             const manager = sessionManager(c);
             await kindeClient.handleRedirectToApp(manager, url);
     
-            return c.redirect("http://localhost:5173/");
+            // Dynamic redirect after login
+            const redirectURL = Bun.env.NODE_ENV === "production"
+                ? "https://job-application-tracker-4r9c.onrender.com/profile"
+                : "http://localhost:5173/profile";
+    
+            return c.redirect(redirectURL);
         } catch (error) {
-            console.error("fail getting the token:", error);
-            return c.text("unauthorize", 500);
+            console.error("Fail getting the token:", error);
+            return c.text("Unauthorized", 500);
         }
     })
     
     
     .get("/logout", async (c) => {
         const logoutUrl = await kindeClient.logout(sessionManager(c));
+    
+        // If Kinde gives you a URL, this is fine
         return c.redirect(logoutUrl.toString());
     })
+    
     .get("/me", getUser, async (c) => {
         const user = c.var.user
         return c.json({ user });
