@@ -8,6 +8,8 @@ import {
 } from "react-beautiful-dnd";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -59,11 +61,11 @@ function Index(): JSX.Element {
 
   const checkAuthentication = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/auth/check", {
+      const response = await axios.get(`${API_BASE_URL}/auth/check`, {
         withCredentials: true,
       });
       if (!response.data.authenticated) {
-        window.location.href = "http://localhost:3000/auth/login";
+        window.location.href = `${API_BASE_URL}/auth/login`;
       }
     } catch (error) {
       console.error("Error checking authentication:", error);
@@ -77,12 +79,11 @@ function Index(): JSX.Element {
   // Fetch dashboard data from the backend
   useEffect(() => {
     axios
-      .get("/api/dashboard", { withCredentials: true })
+      .get(`${API_BASE_URL}/api/dashboard`, { withCredentials: true })
       .then((res) => {
         console.log("Fetched Data:", res.data);
         const fetchedData: Dashboard = res.data;
 
-        // Merge fetched data into initial columns
         const updatedColumns = { ...initialColumns };
         for (const [key, value] of Object.entries(fetchedData)) {
           if (updatedColumns[key]) {
@@ -128,9 +129,10 @@ function Index(): JSX.Element {
       [destination.droppableId]: { ...destCol, tasks: destTasks },
     });
 
+    // update job
     axios
       .post(
-        "/api/dashboard/update",
+        `${API_BASE_URL}/api/dashboard/update`,
         {
           taskId: movedTask.id,
           sourceCol: source.droppableId,
@@ -182,8 +184,11 @@ function Index(): JSX.Element {
     setIsModalOpen(false);
     resetForm();
 
+    // add job
     axios
-      .post("/api/dashboard/add", payload, { withCredentials: true })
+      .post(`${API_BASE_URL}/api/dashboard/add`, payload, {
+        withCredentials: true,
+      })
       .then((res) => {
         console.log("Job added successfully:", res.data);
       })
@@ -209,11 +214,14 @@ function Index(): JSX.Element {
     console.log("Deleting Job ID:", taskId);
 
     axios
-      .post("/api/dashboard/delete", { taskId }, { withCredentials: true })
+      .post(
+        `${API_BASE_URL}/api/dashboard/delete`,
+        { taskId },
+        { withCredentials: true }
+      )
       .then(() => {
         console.log("Job deleted successfully");
 
-        // Remove the task from the state
         const updatedColumns = { ...columns };
         const column = updatedColumns[columnId];
         column.tasks = column.tasks.filter((task) => task.id !== taskId);
