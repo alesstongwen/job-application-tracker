@@ -59,20 +59,20 @@ function Index(): JSX.Element {
     });
   };
 
-  const checkAuthentication = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/auth/check`, {
-        withCredentials: true,
-      });
-      if (!response.data.authenticated) {
-        window.location.href = `${API_BASE_URL}/auth/login`;
-      }
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-    }
-  };
-
   useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/auth/check`, {
+          withCredentials: true,
+        });
+        if (!response.data.authenticated) {
+          window.location.href = `${API_BASE_URL}/auth/login`;
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+      }
+    };
+
     checkAuthentication();
   }, []);
 

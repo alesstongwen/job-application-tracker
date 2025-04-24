@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 export const Route = createFileRoute("/profile")({
   component: RouteComponent,
 });
 
 const logout = async () => {
   try {
-    await axios.get("/auth/logout", { withCredentials: true });
-    window.location.href = "http://localhost:3000/auth/register"; // Redirect to login page after logout
+    await axios.get(`${API_BASE_URL}/auth/logout`, { withCredentials: true });
   } catch (error) {
     console.error("Error during logout:", error);
   }

@@ -19,6 +19,7 @@ export const authRoute = new Hono()
             await kindeClient.handleRedirectToApp(manager, url);
     
             const frontendURL = Bun.env.FRONTEND_URL || "http://localhost:5173";
+            console.log("Redirecting to:", `${frontendURL}/profile`);
             return c.redirect(`${frontendURL}/profile`);
         } catch (error) {
             console.error("Fail getting the token:", error);
@@ -29,8 +30,7 @@ export const authRoute = new Hono()
     
     .get("/logout", async (c) => {
         const logoutUrl = await kindeClient.logout(sessionManager(c));
-    
-        // If Kinde gives you a URL, this is fine
+        console.log("Logging out, redirecting to Kinde:", logoutUrl.toString());
         return c.redirect(logoutUrl.toString());
     })
     
