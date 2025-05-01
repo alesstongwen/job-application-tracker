@@ -19,11 +19,11 @@ export const authRoute = new Hono()
             await kindeClient.handleRedirectToApp(manager, url);
     
             const frontendURL = Bun.env.FRONTEND_URL || "http://localhost:5173";
-            console.log("Redirecting to:", `${frontendURL}/profile`);
-            return c.redirect(`${frontendURL}/profile`);
+            console.log("Redirecting to:", `${frontendURL}/dashboard`);
+            return c.redirect(`${frontendURL}/dashboard`);
         } catch (error) {
             console.error("Fail getting the token:", error);
-            return c.text("Unauthorized", 500);
+            return c.text("Login failed. Please try again.", 500);
         }
     })
     
