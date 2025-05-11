@@ -10,7 +10,7 @@ const app = new Hono();
 app.use('*', logger());
 
 app.use('*', cors({ 
-  origin: ["http://localhost:5173", "https://job-application-tracker-4r9c.onrender.com/"], 
+  origin: ["http://localhost:5173", "https://job-application-tracker-4r9c.onrender.com"], 
   credentials: true 
 }));
 

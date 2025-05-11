@@ -50,8 +50,8 @@ export const sessionManager = (c: Context): SessionManager => ({
         console.log(`Setting Cookie [${key}]:`, value); // Debugging log
         const cookieOptions = {
             httpOnly: true,
-            secure: false, // testing locally -> false 
-            sameSite: "Lax",
+            secure: Bun.env.NODE_ENV === "production", 
+            sameSite: Bun.env.NODE_ENV === "production" ? "None" : "Lax", 
         } as const;
         if (typeof value === "string") {
             setCookie(c, key, value, cookieOptions);
