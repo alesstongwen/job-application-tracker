@@ -7,11 +7,21 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import axios from "axios";
+import { redirect } from "@tanstack/react-router";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
+
+  beforeLoad: async () => {
+    const res = await fetch(`${API_BASE_URL}/auth/check`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      throw redirect({ to: "/" });
+    }
+  },
 });
 
 type Task = {
@@ -58,23 +68,6 @@ function DashboardPage(): JSX.Element {
       description: "",
     });
   };
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/auth/check`, {
-          withCredentials: true,
-        });
-        if (!response.data.authenticated) {
-          window.location.href = `${API_BASE_URL}/auth/login`;
-        }
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-      }
-    };
-
-    checkAuthentication();
-  }, []);
 
   // Fetch dashboard data from the backend
   useEffect(() => {
