@@ -1,12 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { redirect } from "@tanstack/react-router";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const Route = createFileRoute("/")({
   component: HomePage,
+  beforeLoad: async () => {
+    const res = await fetch(`${API_BASE_URL}/auth/check`, {
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
 });
 
 function HomePage() {
-  const API_BASE_URL = import.meta.env.VITE_API_URL;
-
   const handleLogin = () => {
     window.location.href = `${API_BASE_URL}/auth/login`;
   };
