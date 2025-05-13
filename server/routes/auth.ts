@@ -29,10 +29,16 @@ export const authRoute = new Hono()
     
     
     .get("/logout", async (c) => {
-        const logoutUrl = await kindeClient.logout(sessionManager(c));
-        console.log("Logging out, redirecting to Kinde:", logoutUrl.toString());
-        return c.redirect(logoutUrl.toString());
-    })
+  const manager = sessionManager(c);
+
+  await manager.destroySession();
+
+  const logoutUrl = await kindeClient.logout(manager);
+  console.log("Logging out, redirecting to Kinde:", logoutUrl.toString());
+
+  return c.redirect(logoutUrl.toString());
+})
+
     
     .get("/me", getUser, async (c) => {
         const user = c.var.user
